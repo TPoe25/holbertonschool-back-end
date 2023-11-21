@@ -15,10 +15,10 @@ if __name__ == '__main__':
     employee_id = argv[1]
     base_url = "http://jsonplaceholder.typicode.com"
 
-    # Users info 
+    # Users info
     user_response = requests.get("{}/users/{}".format(base_url, employee_id))
     user_data = user_response.json()
-    employee_name = user_data.get("username")  # Change "name" to "username"
+    employee_name = user_data.get("username")
 
     # User's TODO list
     todo_response = requests.get("{}/todos?userId={}".format(base_url, employee_id))
