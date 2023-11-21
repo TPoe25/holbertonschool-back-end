@@ -25,7 +25,7 @@ if __name__ == '__main__':
     todo_response = requests.get(f"{base_url}/todos?userId={employee_id}")
     todo_data = todo_response.json()
 
-   # create CSV and wrtie data
+    #create CSV and wrtie data
     csv_file_name = f"{employee_id}.csv"
     with open(csv_file_name, mode='w', newline='') as csv_file:
         csv_writer = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
