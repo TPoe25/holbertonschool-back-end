@@ -1,42 +1,56 @@
 #!/usr/bin/python3
 """
-Gathers data fron APT and shows TODO list for employee ID
+Using what still doesn't work in task 0...
+Extend your Python script to export data in the JSON format
 """
-from sys import argv
-import requests
 import json
+import requests
+import sys
 
-if __name__ == '__main__':
-    # Checks number of args provided
-    if len(argv) != 2:
-        print("Usage: {} <employee_id>".format(argv[0]))
-        exit(1)
 
-    employee_id = argv[1]
-    base_url = "http://jsonplaceholder.typicode.com"
+def export_to_json(user_id):
+    """Export employee progress to JSON"""
+    url = "https://jsonplaceholder.typicode.com"
+    empl_url = f"{url}/users/{user_id}"
+    todo_url = f"{url}/todos"
 
-    # Users info
-    user_response = requests.get("{}/users/{}".format(base_url, employee_id))
-    user_data = user_response.json()
-    employee_name = user_data.get("username")
+    empl_data = requests.get(empl_url).json()
+    todo_data = requests.get(todo_url, params={"userId": user_id}).json()
 
-    # User's TODO list
-    todo_response = requests.get("{}/todos?userId={}".format(base_url, employee_id))
-    todo_data = todo_response.json()
+    empl_name = empl_data.get("name")
+    user_name = empl_data.get("username")
+    completed_tasks = [t["title"] for t in todo_data if t["completed"]]
+    num_done = len(completed_tasks)
+    num_total = len(todo_data)
 
-    # Prepares the data in JSON layout
-    json_data = {
-        employee_id: [
-            {
-                "task": task.get("title"),
-                "completed": task.get("completed"),
-                "username": employee_name,
-            }
-            for task in todo_data
-        ]
-    }
+    user_todo_list = []
+    for task in todo_data:
+        task_dict = {
+            "task": task["title"],
+            "completed": task["completed"],
+            "username": user_name
+        }
+        user_todo_list.append(task_dict)
 
-    # Write data to JSON file
-    json_filename = "{}.json".format(employee_id)
-    with open(json_filename, 'w') as json_file:
-        json.dump(json_data, json_file)
+    user_todo_dict = {f"{user_id}": user_todo_list}
+
+    with open(f"{user_id}.json", "w") as f:
+        json.dump(user_todo_dict, f)
+
+    print("Employee {} is done with tasks({}/{}):"
+          .format(empl_name, num_done, num_total))
+    for todo in completed_tasks:
+        print(f"\t {todo}")
+
+
+if __name__ == "__main__":
+    # Check the number of args
+    if len(sys.argv) != 2:
+        print("Usage: {} <employee_id>".format(sys.argv[0]))
+        sys.exit(1)
+
+    # Gets the user ID from command-line args
+    user_id = int(sys.argv[1])
+
+    # Calls export function
+    export_to_json(user_id)
