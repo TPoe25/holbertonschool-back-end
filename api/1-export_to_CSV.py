@@ -3,25 +3,33 @@
 Gathers data fron APT and shows TODO list for employee ID
 """
 from sys import argv
-import json 
 import requests
+import csv
 
 
 if __name__ == '__main__':
-    url = 'https://jsonplaceholder.typicode.com/users'
-    response = requests.get(url)
-    users = response.json()
+    # Checks if number of args is provided
+    if len(argv) != 2:
+        print(f"Usage: {argv[0]} <employee_id>")
+        exit(1)
 
-    url = 'https://jsonplaceholder.typicode.com/todos'
-    response = requests.get(url)
-    todos = response.json()
+    employee_id = argv[1]
+    base_url = "http://jsonplaceholder.typicode.com"
 
-    user_dict = {}
-    for user in users:
-        user_id = str(user.get('id'))
-        username = user.get('username')
-        tasks = [{"username": username, "task": task.get('title'), "completed": task.get('completed')} for task in todos if task.get('userId') == user.get('id')]
-        user_dict[user_id] = tasks
+    # User Info
+    user_response = requests.get(f"{base_url}/users/{employee_id}")
+    user_data = user_response.json()
+    employee_name = user_data.get("username")
 
-    with open("todo_all_employees.json", "w") as jsonfile:
-        json.dump(user_dict, jsonfile)
+    # User's TODO listß
+    todo_response = requests.get(f"{base_url}/todos?userId={employee_id}")
+    todo_data = todo_response.json()
+
+   # create CSV and wrtie data
+    csv_file_name = f"{employee_id}.csv"
+    with open(csv_file_name, mode='w', newline='') as csv_file:
+        csv_writer = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
+        for task in todo_data:
+            csv_writer.writerow([employee_id, employee_name, str(task.get("completed")), task.get("title")])
+
+    print(f"CSV file '{csv_file_name}' has been created.")
