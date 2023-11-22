@@ -1,42 +1,40 @@
 #!/usr/bin/python3
 """
-Gathers data fron APT and shows TODO list for employee ID
+Export data in the JSON format.
 """
-from sys import argv
+
 import json
 import requests
+from sys import argv
 
-if __name__ == '__main__':
-    # Checks number of args provided
-    if len(argv) != 2:
-        print("Usage: {} <employee_id>".format(argv[0]))
-        exit(1)
 
-    employee_id = argv[1]
-    base_url = "http://jsonplaceholder.typicode.com"
+if __name__ == "__main__":
+    user_id = argv[1]
+    url = "https://jsonplaceholder.typicode.com/todos"
+    user_url = f"https://jsonplaceholder.typicode.com/users/{user_id}"
 
-    # Users info 
-    user_response = requests.get("{}/users/{}".format(base_url, employee_id))
+    # Get user information
+    user_response = requests.get(user_url)
     user_data = user_response.json()
-    employee_name = user_data.get("username")  # Change "name" to "username"
+    username = user_data.get("username")
 
-    # User's TODO list
-    todo_response = requests.get("{}/todos?userId={}".format(base_url, employee_id))
-    todo_data = todo_response.json()
+    # Get tasks for the user
+    tasks_response = requests.get(url, params={"userId": user_id})
+    tasks_data = tasks_response.json()
 
-    # Prepares the data in JSON layout
-    json_data = {
-        employee_id: [
-            {
-                "task": task.get("title"),
-                "completed": task.get("completed"),
-                "username": employee_name,
-            }
-            for task in todo_data
-        ]
-    }
+    # Create a dictionary to store tasks
+    user_tasks = {user_id: []}
 
-    # Write data to JSON file
-    json_filename = "{}.json".format(employee_id)
-    with open(json_filename, 'w') as json_file:
-        json.dump(json_data, json_file)
+    # Populate the dictionary with task information
+    for task in tasks_data:
+        task_info = {
+            "task": task.get("title"),
+            "completed": task.get("completed"),
+            "username": username
+        }
+        user_tasks[user_id].append(task_info)
+
+    # Save the data to a JSON file
+    filename = f"{user_id}.json"
+    with open(filename, 'w') as json_file:
+        json.dump(user_tasks, json_file)
