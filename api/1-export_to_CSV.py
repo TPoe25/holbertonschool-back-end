@@ -2,6 +2,7 @@
 """
 Gathers data fron APT and shows TODO list for employee ID
 """
+
 from sys import argv
 import requests
 import csv
