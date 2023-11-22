@@ -1,40 +1,52 @@
 #!/usr/bin/python3
 """
-Export data in the JSON format.
+Gathers data from API and shows TODO list for employee ID
 """
-
-import json
-import requests
 from sys import argv
+import requests
+import json
 
+def get_user_info(employee_id):
+    base_url = "http://jsonplaceholder.typicode.com"
+    user_response = requests.get("{}/users/{}".format(base_url, employee_id))
 
-if __name__ == "__main__":
-    user_id = argv[1]
-    url = "https://jsonplaceholder.typicode.com/todos"
-    user_url = f"https://jsonplaceholder.typicode.com/users/{user_id}"
+    # Check if the user ID exists
+    if user_response.status_code != 200:
+        print("User with ID {} not found.".format(employee_id))
+        exit(1)
 
-    # Get user information
-    user_response = requests.get(user_url)
     user_data = user_response.json()
-    username = user_data.get("username")
+    employee_name = user_data.get("username")
+    return employee_name
 
-    # Get tasks for the user
-    tasks_response = requests.get(url, params={"userId": user_id})
-    tasks_data = tasks_response.json()
+if __name__ == '__main__':
+    # Checks number of args provided
+    if len(argv) != 2:
+        print("Usage: {} <employee_id>".format(argv[0]))
+        exit(1)
 
-    # Create a dictionary to store tasks
-    user_tasks = {user_id: []}
+    employee_id = argv[1]
 
-    # Populate the dictionary with task information
-    for task in tasks_data:
-        task_info = {
-            "task": task.get("title"),
-            "completed": task.get("completed"),
-            "username": username
-        }
-        user_tasks[user_id].append(task_info)
+    # Get user info
+    employee_name = get_user_info(employee_id)
 
-    # Save the data to a JSON file
-    filename = f"{user_id}.json"
-    with open(filename, 'w') as json_file:
-        json.dump(user_tasks, json_file)
+    # User's TODO list
+    todo_response = requests.get("http://jsonplaceholder.typicode.com/todos?userId={}".format(employee_id))
+    todo_data = todo_response.json()
+
+    # Prepares the data in JSON layout
+    json_data = {
+        employee_id: [
+            {
+                "task": task.get("title"),
+                "completed": task.get("completed"),
+                "username": employee_name,
+            }
+            for task in todo_data
+        ]
+    }
+
+    # Write data to JSON file
+    json_filename = "{}.json".format(employee_id)
+    with open(json_filename, 'w') as json_file:
+        json.dump(json_data, json_file)
